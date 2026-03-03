@@ -23,8 +23,8 @@ export function verifyShopifyHmac(
     .update(rawBody)
     .digest('base64');
 
-  const computedBuf = Buffer.from(computed, 'utf8');
-  const headerBuf = Buffer.from(hmacHeader, 'utf8');
+  const computedBuf = Buffer.from(computed, 'base64');
+  const headerBuf = Buffer.from(hmacHeader, 'base64');
 
   if (
     computedBuf.length !== headerBuf.length ||

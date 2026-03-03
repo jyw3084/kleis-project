@@ -8,8 +8,6 @@ export function computeGap(
   return threshold - cartSubtotal;
 }
 
-const CLEARANCE_BONUS_POINTS = 2;
-
 export function filterCandidates(products: MockProduct[]): MockProduct[] {
   return products.filter((p) => p.availableForSale);
 }
@@ -43,10 +41,15 @@ export function pickBestCandidate(
   clearanceProductIds: string[],
   gap: number
 ): MockProduct | null {
+  // Fast path: if gap is 0 or negative, no product should be suggested
   if (gap <= 0) return null;
+
+  // Filter out products that are not available for sale
   const candidates = filterCandidates(products);
   if (candidates.length === 0) return null;
+
   const clearanceSet = new Set(clearanceProductIds);
+  // Fast path: if any candidates have price > gap, pick the cheapest among them (tie-break: prefer clearance)
   const aboveGap = candidates.filter((p) => p.price > gap);
   if (aboveGap.length > 0) {
     return aboveGap.reduce((best, p) => {
@@ -55,17 +58,20 @@ export function pickBestCandidate(
       return clearanceSet.has(p.id) ? p : best;
     });
   }
+  
+  // Score products based on their bought-together affinity, clearance status, and price
   const scored = candidates.map((p) => {
-    const baseScore = scoreProduct(p.id, cartProductIds, boughtTogetherSets);
-    const clearanceBonus = clearanceSet.has(p.id) ? CLEARANCE_BONUS_POINTS : 0;
-    const totalScore =
-      baseScore + (p.price >= gap ? 1 : 0) + clearanceBonus;
+    const baseScore = scoreProduct(p.id, cartProductIds, boughtTogetherSets); // Score product based on its bought-together affinity
+    const clearanceBonus = clearanceSet.has(p.id) ? 2 : 0; // Add bonus points if product is on clearance
+    const totalScore = baseScore + (p.price >= gap ? 1 : 0) + clearanceBonus; // Calculate total score based on base score, price, and clearance bonus
     return { product: p, score: totalScore };
   });
-  const maxScore = Math.max(...scored.map((s) => s.score));
-  const topByScore = scored.filter((s) => s.score === maxScore);
-  if (topByScore.length === 1) return topByScore[0]!.product;
-  // Tie-break: score 1 → min price; score >= 2 → by margin
+
+  const maxScore = Math.max(...scored.map((s) => s.score)); // Find the product with the highest score
+  const topByScore = scored.filter((s) => s.score === maxScore); // Filter products to only include those with the highest score
+  if (topByScore.length === 1) return topByScore[0]!.product; // If there is only one product with the highest score, return it
+  
+  // Tie-break: score 1 → min price
   if (maxScore === 1) {
     let best = topByScore[0]!;
     for (let i = 1; i < topByScore.length; i++) {
@@ -74,6 +80,8 @@ export function pickBestCandidate(
     }
     return best.product;
   }
+
+  // Tie-break: score >= 2 → highest margin
   let best = topByScore[0]!;
   for (let i = 1; i < topByScore.length; i++) {
     const curr = topByScore[i]!;

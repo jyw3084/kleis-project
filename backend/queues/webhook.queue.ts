@@ -15,7 +15,7 @@ export function getWebhookQueue(): Queue {
         delay: 2000,
       },
       removeOnComplete: { count: 1000 },
-      removeOnFail: false,
+      removeOnFail: { age: 86400000 }, // 24 hours
     },
   });
 
