@@ -1,0 +1,25 @@
+{
+  "name": "kleis-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch server.ts",
+    "start": "node --import tsx server.ts",
+    "typecheck": "tsc --noEmit",
+    "tunnel": "ngrok http ${PORT:-3000}"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.8.1",
+    "bullmq": "^5.34.8",
+    "dotenv": "^16.4.7",
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/express": "^5.0.2",
+    "@types/node": "^22.13.9",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2"
+  }
+}
