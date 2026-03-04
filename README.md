@@ -2,7 +2,7 @@
 1. 接收 webhook — POST /webhooks/shopify 擷取 raw 資料封包確認 Shopify HMAC 加密
 2. 驗證 Shopfiy HMAC-SHA256 與環境參數 SHOPIFY_WEBHOOK_SECRET，使用 timingSafeEqual。商店網域必須與 config 相同
 3. Event 在進入 queue 之前，先以 INSERT OR IGNORE（依 event_id）寫入 SQLite webhook_events table。即使 queue 當機，也能保證資料不會遺失。
-p.s. 這邊我有考慮更改為先將 webhook event_id 與 raw payload 存入 queue，馬上回傳 status == 200，之後再安排 job worker 執行將 payload 資料寫入對應資料庫欄位，確保資料庫寫入動作不會 block 回傳 status 的動作。但最後考慮 payload 大小可能對 job queue 會過於龐大因此作罷
+p.s. 這邊我有考慮更改為先將 webhook event_id 與 raw payload 存入 queue，馬上回傳 status == 200，之後再安排 job worker 執行將 payload 資料寫入對應資料庫欄位，確保資料庫寫入動作不會 block 回傳 status 的動作。但最後考慮 payload 大小可能對 job queue 會過於龐大因此作罷。解決 payload 大小的方式可以事先設定 Shopify webhook includeFields 參數。
 
 4. 以 jobId（webhook:{eventId}）建立 BullMQ 任務。已處於執行中或已完成的重複任務會被略過，而延遲中或等待中的則會被新任務取代。任務依據 X-Shopify-Triggered-At 設定延遲與排序，確保依時間先後處理。
 5. Worker 處理 webhook_events table 中記錄，依照 topic 分類:
