@@ -45,7 +45,7 @@ webhookRouter.post(
       }
 
       const queue = getWebhookQueue();
-      const jobId = `webhook:${eventId}`;
+      const jobId = `webhook-${eventId}`;
       const existing = await queue.getJob(jobId);
       if (existing) {
         const state = await existing.getState();
